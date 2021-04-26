@@ -4,43 +4,45 @@ import matplotlib.pyplot as plt
 
 
 def create_generator(latent_dim):
-    """
-    生成器
+    model = tf.keras.models.Sequential()
+    model.add(tf.keras.layers.InputLayer(input_shape=(latent_dim,)))
+    model.add(tf.keras.layers.Dense(7 * 7 * 64, activation="relu"))
+    model.add(tf.keras.layers.Reshape((7, 7, 64)))
+    model.add(tf.keras.layers.UpSampling2D())
+    model.add(tf.keras.layers.Conv2D(64, kernel_size=3, padding="same", activation=tf.keras.activations.relu))
+    model.add(tf.keras.layers.BatchNormalization(momentum=0.8))
 
-    :param latent_dim: 隐藏单元
-    :return:
-    """
-    seq = tf.keras.models.Sequential([
-        tf.keras.layers.InputLayer(input_shape=(latent_dim,)),
-        tf.keras.layers.Dense(7 * 7 * 64, activation="relu"),
-        tf.keras.layers.Reshape(target_shape=(7, 7, 64)),
-        tf.keras.layers.Conv2DTranspose(32, 2, 2, padding="same", activation="relu"),
-        tf.keras.layers.Conv2DTranspose(1, 2, 2, padding="same", activation="relu"),
-    ])
-    seq.summary()
-    return seq
+    model.add(tf.keras.layers.UpSampling2D())
+    model.add(tf.keras.layers.Conv2D(32, kernel_size=3, padding="same", activation=tf.keras.activations.relu))
+    model.add(tf.keras.layers.BatchNormalization(momentum=0.8))
+
+    model.add(tf.keras.layers.Conv2D(1, kernel_size=3, padding="same", activation=tf.keras.activations.tanh))
+    model.summary()
+    return model
 
 
 def create_discriminator():
-    """
-    判别器
+    model = tf.keras.models.Sequential()
+    model.add(tf.keras.layers.InputLayer(input_shape=(28, 28, 1)))
+    model.add(tf.keras.layers.Conv2D(32, kernel_size=3, strides=2, padding="same"))
+    model.add(tf.keras.layers.LeakyReLU(alpha=0.2))
 
-    :return:
-    """
+    model.add(tf.keras.layers.Conv2D(64, kernel_size=3, strides=2, padding="same"))
+    model.add(tf.keras.layers.BatchNormalization(momentum=0.8))
+    model.add(tf.keras.layers.LeakyReLU(alpha=0.2))
 
-    seq = tf.keras.models.Sequential([
-        tf.keras.layers.InputLayer(input_shape=(28, 28, 1)),
-        # 数据增强
-        tf.keras.layers.experimental.preprocessing.RandomFlip('horizontal',
-                                                              input_shape=(28, 28, 1)),
-        tf.keras.layers.experimental.preprocessing.RandomRotation(0.2),
-        tf.keras.layers.Conv2D(32, 2, 2, padding="same", activation="relu"),
-        tf.keras.layers.Conv2D(64, 2, 2, padding="same", activation="relu"),
-        tf.keras.layers.GlobalMaxPooling2D(),
-        tf.keras.layers.Dense(1, activation=tf.keras.activations.sigmoid)
-    ])
-    seq.summary()
-    return seq
+    model.add(tf.keras.layers.Conv2D(128, kernel_size=3, strides=2, padding="same"))
+    model.add(tf.keras.layers.BatchNormalization(momentum=0.8))
+    model.add(tf.keras.layers.LeakyReLU(alpha=0.2))
+
+    model.add(tf.keras.layers.Conv2D(256, kernel_size=3, strides=1, padding="same"))
+    model.add(tf.keras.layers.LeakyReLU(alpha=0.2))
+    model.add(tf.keras.layers.BatchNormalization(momentum=0.8))
+
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
+    model.summary()
+    return model
 
 
 class Gan(object):
@@ -81,7 +83,7 @@ class Gan(object):
         latest_checkpoint = self.check_point_manager.latest_checkpoint
         if latest_checkpoint:
             print("Initializing from check point : {}".format(latest_checkpoint))
-            self.check_point.restore(latest_checkpoint)
+            self.check_point.restore(latest_checkpoint)  # 从最近的检查点恢复数据
         else:
             print("Initializing from scratch...")
 
@@ -140,6 +142,7 @@ class Gan(object):
                     print(log_info)
                     tf.summary.scalar(name="loss_generator", data=loss_generator, step=step)
                     tf.summary.scalar(name="loss_discriminator", data=loss_discriminator, step=step)
+                    tf.summary.scalar(name="acc", data=acc, step=step)
 
                     if step % self.save_interval == 0:
                         self.check_point_manager.save()
@@ -155,9 +158,9 @@ class Gan(object):
 if __name__ == '__main__':
     _check_point_root = "check_points/gan"
     _log_dir = "logs/gan"
-    gan = Gan(epochs=5,
-              latent_dim=32,
-              batch_size=32,
+    gan = Gan(epochs=10,
+              latent_dim=100,
+              batch_size=64,
               check_point_root=_check_point_root,
               save_interval=50,
               log_dir=_log_dir

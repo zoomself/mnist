@@ -6,6 +6,16 @@ def process_fn(x):
     return x
 
 
+def create_simple_data():
+    (train_x, train_y), (test_x, test_y) = tf.keras.datasets.mnist.load_data()
+    train_x = train_x[..., tf.newaxis]
+    train_x = process_fn(train_x)
+
+    test_x = test_x[..., tf.newaxis]
+    test_x = process_fn(test_x)
+    return (train_x, train_y), (test_x, test_y)
+
+
 def create_dataset(batch_size):
     auto_tune = tf.data.experimental.AUTOTUNE
     (train_x, train_y), (test_x, test_y) = tf.keras.datasets.mnist.load_data()
