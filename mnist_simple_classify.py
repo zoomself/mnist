@@ -18,7 +18,7 @@ def create_model():
 
 
 if __name__ == '__main__':
-    _save_model_path = "models/simple_classify"
+    _save_model_path = "models/mnist_simple_classify"
     (train_x, train_y), (test_x, test_y) = utils.create_simple_data()
     if tf.io.gfile.exists(_save_model_path):
         _model = tf.saved_model.load(_save_model_path)

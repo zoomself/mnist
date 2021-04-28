@@ -156,7 +156,7 @@ class Gan(object):
 
 
 if __name__ == '__main__':
-    _check_point_root = "check_points/gan"
+    _check_point_root = "check_points/mnist_gan"
     _log_dir = "logs/gan"
     gan = Gan(epochs=10,
               latent_dim=100,
