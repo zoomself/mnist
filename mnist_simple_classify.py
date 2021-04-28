@@ -2,6 +2,8 @@ import tensorflow as tf
 import mnist_utils as utils
 
 
+
+
 def create_model():
     seq = tf.keras.models.Sequential([
         tf.keras.layers.InputLayer(input_shape=(28, 28, 1)),
@@ -23,6 +25,11 @@ if __name__ == '__main__':
     if tf.io.gfile.exists(_save_model_path):
         _model = tf.saved_model.load(_save_model_path)
         print("load exist model")
+        print(_model)
+        # <tensorflow.python.saved_model.load.Loader._recreate_base_user_object.<locals>._UserObject object at
+        # 0x00000125153BD400>
+        # save_model 加载出来的模型无法使用summary 只可以执行@tf.function修饰的函数
+        # _model.summary()
     else:
         print("init model")
         _model = create_model()
